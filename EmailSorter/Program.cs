@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -22,7 +23,8 @@ namespace EmailSorter
             var cleanedEmails = Clean(emptyLinesRemovedEmails);
             var distinctEmails = cleanedEmails.Distinct(StringComparer.CurrentCultureIgnoreCase);
 
-            Export(removeForbiddenEmails ? RemoveForbidden(forbiddenEmails, distinctEmails).ToList() : distinctEmails.ToList());
+            var fileName = Export(removeForbiddenEmails ? RemoveForbidden(forbiddenEmails, distinctEmails).ToList() : distinctEmails.ToList());
+            new Process { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = fileName } }.Start();
         }
 
         private static IEnumerable<string> Separate(IEnumerable<string> separationCriteria, IEnumerable<string> emails) =>
@@ -48,12 +50,13 @@ namespace EmailSorter
             return emails;
         }
 
-        private static void Export(ICollection<string> finalEmails)
+        private static string Export(ICollection<string> finalEmails)
         {
             var directoryName = $@"{Directory.GetCurrentDirectory()}\Sorted Emails";
             if (!Directory.Exists(directoryName)) Directory.CreateDirectory(directoryName);
             var fileName = $@"{directoryName}\{DateTime.Now:yyyyMMdd-HHmmss} - {finalEmails.Count}.txt";
             File.WriteAllText(fileName, String.Join("\r\n", finalEmails));
+            return fileName;
         }
     }
 }
