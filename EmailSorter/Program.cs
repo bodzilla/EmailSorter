@@ -20,12 +20,12 @@ namespace EmailSorter
             var separatedEmails = Separate(separationCriteria, rawEmails);
             var emptyLinesRemovedEmails = RemoveEmptyLines(separatedEmails);
             var cleanedEmails = Clean(emptyLinesRemovedEmails);
-            var distinctEmails = cleanedEmails.Distinct();
+            var distinctEmails = cleanedEmails.Distinct(StringComparer.CurrentCultureIgnoreCase);
 
             Export(removeForbiddenEmails ? RemoveForbidden(forbiddenEmails, distinctEmails).ToList() : distinctEmails.ToList());
         }
 
-        private static IEnumerable<string> Separate(IEnumerable<string> separationCriteria, IList<string> emails) =>
+        private static IEnumerable<string> Separate(IEnumerable<string> separationCriteria, IEnumerable<string> emails) =>
             separationCriteria
                 .SelectMany(separationCriterion => emails, (separationCriterion, email) => new { separationCriterion, email })
                 .SelectMany(x => x.email.Split(x.separationCriterion));
@@ -42,7 +42,7 @@ namespace EmailSorter
         {
             foreach (var forbiddenEmail in forbiddenEmails)
             {
-                var subset = emails.Where(x => !x.Contains(forbiddenEmail));
+                var subset = emails.Where(x => !x.Contains(forbiddenEmail, StringComparison.CurrentCultureIgnoreCase));
                 emails = subset;
             }
             return emails;
