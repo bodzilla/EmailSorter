@@ -25,7 +25,6 @@ namespace EmailSorter
             new Process { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = fileName } }.Start();
         }
 
-
         private static ICollection<string> Clean(IEnumerable<string> emails)
         {
             var validEmailsRegex = new Regex(@"(.*?)([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)(.*?)");
