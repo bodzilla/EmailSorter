@@ -10,44 +10,44 @@ namespace EmailSorter
 {
     public class Program
     {
+        private static IList<string> _forbiddenEmails;
+        private static bool _removeForbiddenEmails;
         private static void Main()
         {
             var configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
-            var separationCriteria = configuration.GetSection("separation-criteria").GetChildren().Select(x => x.Value);
-            var forbiddenEmails = configuration.GetSection("forbidden-emails").GetChildren().Select(x => x.Value);
-            var removeForbiddenEmails = bool.Parse(configuration.GetSection("remove-forbidden-emails").Value);
+            _forbiddenEmails = configuration.GetSection("forbidden-emails").GetChildren().Select(x => x.Value).ToList();
+            _removeForbiddenEmails = bool.Parse(configuration.GetSection("remove-forbidden-emails").Value);
 
             var rawEmails = File.ReadAllLines($@"{Directory.GetCurrentDirectory()}\raw-emails.txt");
-            var separatedEmails = Separate(separationCriteria, rawEmails);
-            var emptyLinesRemovedEmails = RemoveEmptyLines(separatedEmails);
-            var cleanedEmails = Clean(emptyLinesRemovedEmails);
-            var distinctEmails = cleanedEmails.Distinct(StringComparer.CurrentCultureIgnoreCase);
-
-            var fileName = Export(removeForbiddenEmails ? RemoveForbidden(forbiddenEmails, distinctEmails).ToList() : distinctEmails.ToList());
+            var cleanedEmails = Clean(rawEmails);
+            var fileName = Export(cleanedEmails);
             new Process { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = fileName } }.Start();
         }
 
-        private static IEnumerable<string> Separate(IEnumerable<string> separationCriteria, IEnumerable<string> emails) =>
-            separationCriteria
-                .SelectMany(separationCriterion => emails, (separationCriterion, email) => new { separationCriterion, email })
-                .SelectMany(x => x.email.Split(x.separationCriterion));
 
-        private static IEnumerable<string> RemoveEmptyLines(IEnumerable<string> emails) => emails.Where(x => !String.IsNullOrWhiteSpace(x));
-
-        private static IEnumerable<string> Clean(IEnumerable<string> emails)
+        private static IList<string> Clean(IEnumerable<string> emails)
         {
-            var validEmail = new Regex(@"(.*?)([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)(.*?)");
-            return emails.SelectMany(email => validEmail.Match(email).Groups[2].Captures, (email, clean) => clean.Value);
+            var validEmailsRegex = new Regex(@"(.*?)([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)(.*?)");
+            var escapedEmails = (emails.Select(email => email.Replace(@"\n", " "))
+                .Select(escapedEmail => validEmailsRegex.Matches(escapedEmail))
+                .Where(matches => matches.Any())
+                .SelectMany(x => x, (matches, match) => new { matches, match })
+                .SelectMany(x => x.match.Captures, (x, clean) => clean.Value)).ToList();
+
+            var validEmailRegex = new Regex(@"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+");
+            var cleanedEmails = escapedEmails.Select(email => validEmailRegex.Match(email).Value).Where(match => !String.IsNullOrWhiteSpace(match) && !IsForbiddenEmail(match)).ToList();
+            return cleanedEmails.Distinct(StringComparer.CurrentCultureIgnoreCase).ToList();
         }
 
-        private static IEnumerable<string> RemoveForbidden(IEnumerable<string> forbiddenEmails, IEnumerable<string> emails)
+        private static bool IsForbiddenEmail(string email)
         {
-            foreach (var forbiddenEmail in forbiddenEmails)
+            if (!_removeForbiddenEmails) return false;
+            bool forbidden = false;
+            foreach (var forbiddenEmail in _forbiddenEmails)
             {
-                var subset = emails.Where(x => !x.Contains(forbiddenEmail, StringComparison.CurrentCultureIgnoreCase));
-                emails = subset;
+                if (email.Contains(forbiddenEmail, StringComparison.CurrentCultureIgnoreCase)) forbidden = true;
             }
-            return emails;
+            return forbidden;
         }
 
         private static string Export(ICollection<string> finalEmails)
