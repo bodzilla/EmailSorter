@@ -9,7 +9,6 @@ namespace EmailSorter
 {
     public class Program
     {
-
         private static void Main()
         {
             var configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
@@ -28,9 +27,8 @@ namespace EmailSorter
 
         private static IEnumerable<string> Separate(IEnumerable<IConfigurationSection> separationCriteria, IList<string> emails) =>
             separationCriteria
-                .SelectMany(separationCriterion => emails,
-                    (separationCriterion, email) => new { separationCriterion, email })
-                .SelectMany(@x => @x.email.Split(@x.separationCriterion.Value));
+                .SelectMany(separationCriterion => emails, (separationCriterion, email) => new { separationCriterion, email })
+                .SelectMany(x => x.email.Split(x.separationCriterion.Value));
 
         private static IEnumerable<string> RemoveEmptyLines(IEnumerable<string> emails) => emails.Where(x => !String.IsNullOrWhiteSpace(x));
 
