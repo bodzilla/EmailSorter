@@ -1,0 +1,12 @@
+﻿{
+  "separation-criteria": {
+    "1": ";",
+    "2": ",",
+    "3": " "
+  },
+  "forbidden-emails": {
+    "1": "outlook.com",
+    "2": "gmail.com"
+  },
+  "remove-forbidden-emails": "true"
+}
