@@ -12,7 +12,7 @@ namespace EmailSorter
         private static void Main()
         {
             var configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
-            var separationCriteria = configuration.GetSection("separation-criteria").GetChildren();
+            var separationCriteria = configuration.GetSection("separation-criteria").GetChildren().Select(x => x.Value);
             var forbiddenEmails = configuration.GetSection("forbidden-emails").GetChildren().Select(x => x.Value);
             var removeForbiddenEmails = bool.Parse(configuration.GetSection("remove-forbidden-emails").Value);
 
@@ -25,10 +25,10 @@ namespace EmailSorter
             Export(removeForbiddenEmails ? RemoveForbidden(forbiddenEmails, distinctEmails).ToList() : distinctEmails.ToList());
         }
 
-        private static IEnumerable<string> Separate(IEnumerable<IConfigurationSection> separationCriteria, IList<string> emails) =>
+        private static IEnumerable<string> Separate(IEnumerable<string> separationCriteria, IList<string> emails) =>
             separationCriteria
                 .SelectMany(separationCriterion => emails, (separationCriterion, email) => new { separationCriterion, email })
-                .SelectMany(x => x.email.Split(x.separationCriterion.Value));
+                .SelectMany(x => x.email.Split(x.separationCriterion));
 
         private static IEnumerable<string> RemoveEmptyLines(IEnumerable<string> emails) => emails.Where(x => !String.IsNullOrWhiteSpace(x));
 
