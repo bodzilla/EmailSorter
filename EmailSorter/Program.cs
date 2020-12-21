@@ -9,14 +9,13 @@ namespace EmailSorter
 {
     public class Program
     {
-        private static IConfiguration _configuration;
 
         private static void Main()
         {
-            _configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
-            var separationCriteria = _configuration.GetSection("separation-criteria").GetChildren();
-            var forbiddenEmails = _configuration.GetSection("forbidden-emails").GetChildren().Select(x => x.Value);
-            var removeForbiddenEmails = bool.Parse(_configuration.GetSection("remove-forbidden-emails").Value);
+            var configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
+            var separationCriteria = configuration.GetSection("separation-criteria").GetChildren();
+            var forbiddenEmails = configuration.GetSection("forbidden-emails").GetChildren().Select(x => x.Value);
+            var removeForbiddenEmails = bool.Parse(configuration.GetSection("remove-forbidden-emails").Value);
 
             var rawEmails = File.ReadAllLines($@"{Directory.GetCurrentDirectory()}\raw-emails.txt");
             var separatedEmails = Separate(separationCriteria, rawEmails);
