@@ -1,7 +1,7 @@
 ﻿{
-  "forbidden-emails": {
-    "1": "outlook.com",
-    "2": "gmail.com"
+  "excluded-emails": {
+    "1": "stonex.com",
+    "2": "intlfcstone.com"
   },
-  "remove-forbidden-emails": "false"
+  "remove-excluded-emails": "true"
 }
